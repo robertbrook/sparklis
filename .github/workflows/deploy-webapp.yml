@@ -28,6 +28,28 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Show deployment context
+        run: |
+          echo "Repository: ${{ github.repository }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Triggered by: ${{ github.actor }}"
+          echo "Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          echo "Source directory: webapp"
+          echo "Target environment: github-pages"
+
+      - name: List files to deploy
+        run: |
+          set -euo pipefail
+          echo "Webapp file count:"
+          find webapp -type f | wc -l
+          echo ""
+          echo "Webapp size:"
+          du -sh webapp
+          echo ""
+          echo "Webapp file list:"
+          find webapp -type f | sort
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
@@ -39,3 +61,8 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Show deployed URL
+        if: ${{ always() }}
+        run: |
+          echo "Deployed URL: ${{ steps.deployment.outputs.page_url }}"
