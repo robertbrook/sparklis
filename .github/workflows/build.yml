@@ -1,0 +1,63 @@
+name: Build and Commit osparklis.js
+
+on:
+  push:
+    branches: [ master, main ]
+    paths-ignore:
+      - 'webapp/osparklis.js'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y opam camlp5 m4 pkg-config libgmp-dev
+
+      - name: Initialise opam
+        run: |
+          opam init --disable-sandboxing --yes
+          opam switch create 4.14.2 --yes || opam switch 4.14.2
+          eval $(opam env --switch=4.14.2)
+          echo "OPAM_SWITCH_PREFIX=$(opam var prefix)" >> $GITHUB_ENV
+
+      - name: Install OCaml dependencies
+        run: |
+          eval $(opam env --switch=4.14.2)
+          opam install --yes \
+            csv \
+            lwt \
+            js_of_ocaml \
+            js_of_ocaml-lwt \
+            lwt_ppx \
+            js_of_ocaml-ppx \
+            str \
+            unix \
+            num \
+            xmlm \
+            xml-light
+
+      - name: Build osparklis.js
+        run: |
+          eval $(opam env --switch=4.14.2)
+          make
+
+      - name: Commit webapp/osparklis.js
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add webapp/osparklis.js
+          if git diff --cached --quiet; then
+            echo "No changes to osparklis.js – skipping commit."
+          else
+            git commit -m "chore: update compiled webapp/osparklis.js [skip ci]"
+            git push
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
