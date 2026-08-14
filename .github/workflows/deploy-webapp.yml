@@ -63,6 +63,6 @@ jobs:
         uses: actions/deploy-pages@v4
 
       - name: Show deployed URL
-        if: ${{ always() }}
+        if: ${{ steps.deployment.outcome == 'success' }}
         run: |
           echo "Deployed URL: ${{ steps.deployment.outputs.page_url }}"
